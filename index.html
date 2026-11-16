@@ -1,0 +1,70 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+  <title>LumiGo MR Experience</title>
+  <link rel="stylesheet" href="style.css">
+
+  <script type="module"
+    src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js">
+  </script>
+</head>
+
+<body>
+  <header>
+    <h2>LumiGo</h2>
+    <p>Light up your space.</p>
+  </header>
+
+  <main>
+    <section class="product">
+      <h1>Portable Smart Lamp</h1>
+      <p>Experience your lamp in your own space.</p>
+
+      <model-viewer
+        id="lamp"
+        src="assets/lumigo.glb"
+        ios-src="assets/lumigo.usdz"
+        alt="LumiGo portable smart lamp"
+        camera-controls
+        auto-rotate
+        shadow-intensity="1"
+        ar
+        ar-modes="webxr scene-viewer quick-look"
+        ar-placement="floor">
+
+        <button slot="ar-button" class="ar-button">
+          View in Your Space
+        </button>
+
+      </model-viewer>
+
+      <h2>Price: ฿890</h2>
+
+      <label for="size">Product Size</label>
+      <select id="size">
+        <option value="0.8 0.8 0.8">Small</option>
+        <option value="1 1 1" selected>Medium</option>
+        <option value="1.2 1.2 1.2">Large</option>
+      </select>
+
+      <p id="message">
+        Select your preferred size.
+      </p>
+
+      <button id="buyButton">
+        Buy Now
+      </button>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2026 LumiGo Marketing Experience</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
