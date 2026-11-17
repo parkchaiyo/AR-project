@@ -1,0 +1,21 @@
+{
+  "name": "mr-project",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"nodemon backend/server.js\" \"vite --config frontend/vite.config.js --root frontend --host 0.0.0.0\"",
+    "build": "vite build --config frontend/vite.config.js --root frontend",
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.3.0",
+    "sequelize": "^6.37.8",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.5",
+    "nodemon": "^3.1.14",
+    "vite": "^6.4.6"
+  }
+}
