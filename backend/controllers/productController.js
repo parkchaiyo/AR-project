@@ -1,5 +1,5 @@
 
-import Product from "./models/Product.js";
+import Product from "../models/product.js";
 
 // แสดงสินค้าทั้งหมด
 export const getProducts = async (req, res) => {

@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 
 import sequelize from "./config/database.js";
-import Product from "/models/Product.js";
+import Product from "./models/product.js";
 import productRoutes from "./routes/productRoutes.js";
 
 const app = express();
