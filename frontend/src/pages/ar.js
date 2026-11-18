@@ -54,7 +54,7 @@ export async function renderAR(id) {
 
                     ar
 
-                    ar-modes="webxr scene-viewer"
+                    ar-modes="scene-viewer webxr"
 
                     ar-placement="floor"
 
