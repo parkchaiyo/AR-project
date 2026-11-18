@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"nodemon backend/server.js\" \"vite --config frontend/vite.config.js --root frontend --host 0.0.0.0\"",
-    "build": "vite build --config frontend/vite.config.js --root frontend",
+    "dev": "concurrently \"nodemon backend/server.js\" \"vite --config frontend/vite.config.js --host 0.0.0.0\"",
+    "build": "vite build --config frontend/vite.config.js",
     "start": "node backend/server.js"
   },
   "dependencies": {
