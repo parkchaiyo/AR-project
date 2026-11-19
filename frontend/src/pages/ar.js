@@ -226,8 +226,13 @@ export async function renderAR(id) {
             throw new Error("ไม่สามารถคำนวณขนาดโมเดลได้");
         }
 
-        // กำหนดขนาดสูงสุดเริ่มต้น 50 เซนติเมตร
-        const targetSize = 0.5;
+        // อ่านขนาดโมเดลจากฐานข้อมูล (หน่วยเซนติเมตร)
+        // แปลงเป็นเมตรสำหรับ Babylon.js
+        const targetSize = Number(product.modelSize ?? 50) / 100;
+
+        if (!Number.isFinite(targetSize) || targetSize <= 0) {
+            throw new Error("ขนาดโมเดลในฐานข้อมูลไม่ถูกต้อง");
+        }
 
         const scaleFactor = targetSize / maxDimension;
 

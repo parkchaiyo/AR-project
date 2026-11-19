@@ -25,6 +25,11 @@ const Product = sequelize.define("Product", {
         type: DataTypes.STRING
     },
 
+    modelSize: {
+        type: DataTypes.FLOAT,
+        defaultValue: 50
+    },
+
     stock: {
         type: DataTypes.INTEGER,
         defaultValue: 0

@@ -81,7 +81,7 @@ async function startServer() {
     try {
         await sequelize.authenticate();
 
-        await sequelize.sync();
+        await sequelize.sync({ alter: true });
 
         // เพิ่มสินค้าตัวอย่างเฉพาะเมื่อ Database ยังว่าง
         if (await Product.count() === 0) {
