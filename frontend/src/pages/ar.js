@@ -3,7 +3,9 @@ import {
     Engine,
     Scene,
     Vector3,
+    Matrix,
     Color3,
+    Color4,
     Quaternion,
     HemisphericLight,
     FreeCamera,
@@ -23,8 +25,8 @@ export async function renderAR(id) {
 
     app.innerHTML = `
         <header class="navbar">
-            <h2 onclick="navigate('/')">MR STORE</h2>
-            <span>Babylon AR</span>
+            <h2 onclick="navigate('/')">BENNY STORE</h2>
+            <span>3D AR</span>
         </header>
 
         <section class="container">
@@ -42,6 +44,23 @@ export async function renderAR(id) {
                 <canvas id="babylon-canvas"
                     style="width:100%; height:100%; display:block;">
                 </canvas>
+                <button id="enter-ar-button" disabled
+                        style="
+                            display:block;
+                            width:100%;
+                            margin:20px auto;
+                            padding:18px;
+                            border:none;
+                            border-radius:15px;
+                            background:#2459bd;
+                            color:white;
+                            font-size:20px;
+                            font-weight:bold;
+                            cursor:pointer;
+                            box-shadow:0 5px 15px rgba(36,89,189,0.25);
+                        ">
+                        📷 เข้าสู่โหมด AR
+                    </button>
             </div>
             <div id="xr-overlay"
             style="
@@ -85,12 +104,6 @@ export async function renderAR(id) {
 
             </div>
         </div>
-
-            <p>
-                กด Enter AR เพื่อเปิดกล้อง
-                จากนั้นเล็งพื้นผิวและแตะเพื่อวางสินค้า
-            </p>
-
         </section>
     `;
 
@@ -102,7 +115,9 @@ export async function renderAR(id) {
     let reticle;
     let modelRoot;
     let hasHit = false;
+    let isPlaced = false;
     let modelGroundOffset = 0;
+    let modelAnchorOffset = Vector3.Zero();
 
     try {
 
@@ -132,10 +147,11 @@ export async function renderAR(id) {
         engine = new Engine(canvas, true);
 
         scene = new Scene(engine);
+        scene.clearColor = new Color4(0.95, 0.96, 0.98, 1);
 
         const camera = new FreeCamera(
             "camera",
-            new Vector3(0, 1, -2),
+            new Vector3(0, 0.8, -1),
             scene
         );
 
@@ -237,6 +253,7 @@ export async function renderAR(id) {
         const scaleFactor = targetSize / maxDimension;
 
         modelRoot.scaling.setAll(scaleFactor);
+        const modelCenter = min.add(max).scale(0.5).scale(scaleFactor);
 
         // คำนวณตำแหน่งฐานหลังปรับขนาด
         modelRoot.computeWorldMatrix(true);
@@ -255,8 +272,33 @@ export async function renderAR(id) {
 
         modelGroundOffset = -min.y;
 
-        // ซ่อนโมเดลไว้จนกว่าจะวางใน AR
-        modelRoot.setEnabled(false);
+        // จัดตำแหน่งโมเดลสำหรับแสดง Preview
+        modelRoot.position.set(
+            -modelCenter.x,
+            -min.y,
+            -modelCenter.z
+        );
+
+        modelRoot.position.copyFrom(modelAnchorOffset);
+
+        modelRoot.rotationQuaternion = Quaternion.Identity();
+
+        // บันทึกตำแหน่ง Preview เอาไว้
+        const previewPosition = modelRoot.position.clone();
+
+        // แสดงโมเดลก่อนเข้า AR
+        modelRoot.setEnabled(true);
+
+        // จัดกล้องให้มองเห็นโมเดล
+        camera.setTarget(new Vector3(0, targetSize * 0.45, 0));
+
+        const previewDistance = Math.max(targetSize * 2.8, 0.65);
+
+        camera.position = new Vector3(
+            0,
+            targetSize * 0.8,
+            -previewDistance
+        );
 
         console.log("Model dimensions:", dimensions);
         console.log("Model scale:", scaleFactor);
@@ -266,12 +308,45 @@ export async function renderAR(id) {
         // 5. เปิดระบบ WebXR AR
         const xr = await scene.createDefaultXRExperienceAsync({
 
+            disableDefaultUI: true,
+
             uiOptions: {
                 sessionMode: "immersive-ar",
                 referenceSpaceType: "local-floor"
             },
 
             optionalFeatures: ["hit-test"]
+        });
+
+        const enterARButton =
+            document.querySelector("#enter-ar-button");
+
+        enterARButton.disabled = false;
+
+        enterARButton.addEventListener("click", async () => {
+
+            try {
+                enterARButton.disabled = true;
+                enterARButton.textContent = "กำลังเปิด AR...";
+
+                await xr.baseExperience.enterXRAsync(
+                    "immersive-ar",
+                    "local-floor"
+                );
+
+            } catch (error) {
+
+                console.error("Enter AR Error:", error);
+
+                status.textContent =
+                    "ไม่สามารถเปิด AR ได้: " + error.message;
+
+            } finally {
+
+                enterARButton.disabled = false;
+                enterARButton.textContent = "📷 เข้าสู่โหมด AR";
+
+            }
 
         });
 
@@ -292,33 +367,71 @@ export async function renderAR(id) {
                 "latest"
             );
 
-        // 6. ตรวจจับตำแหน่งพื้นผิว
+        // 6. ตรวจจับพื้นผิวและแสดงโมเดลตัวอย่าง
         hitTest.onHitTestResultObservable.add((results) => {
 
             if (results.length > 0) {
 
                 hasHit = true;
 
-                reticle.isVisible = true;
+                const hitPosition = new Vector3();
+                const hitRotation = Quaternion.Identity();
+                const hitScale = Vector3.One();
 
+                // อ่านตำแหน่งและทิศทางจาก Hit Test
                 results[0].transformationMatrix.decompose(
-                    reticle.scaling,
-                    reticle.rotationQuaternion,
-                    reticle.position
+                    hitScale,
+                    hitRotation,
+                    hitPosition
                 );
+
+                // บันทึกตำแหน่งและการหมุนลง Reticle
+                reticle.position.copyFrom(hitPosition);
+                reticle.rotationQuaternion.copyFrom(hitRotation);
+
+                reticle.isVisible = false;
+
+                if (!isPlaced) {
+
+                    // หมุนระยะชดเชยให้สัมพันธ์กับพื้นผิว
+                    const rotationMatrix = Matrix.Identity();
+
+                    hitRotation.toRotationMatrix(rotationMatrix);
+
+                    const rotatedOffset = Vector3.TransformNormal(
+                        modelAnchorOffset,
+                        rotationMatrix
+                    );
+
+                    // วางฐานโมเดลตรงตำแหน่ง Hit Test
+                    modelRoot.position.copyFrom(
+                        hitPosition.add(rotatedOffset)
+                    );
+
+                    modelRoot.rotationQuaternion =
+                        hitRotation.clone();
+
+                    modelRoot.setEnabled(true);
+                }
 
             } else {
 
                 hasHit = false;
                 reticle.isVisible = false;
 
+                if (!isPlaced) {
+                    modelRoot.setEnabled(false);
+                }
             }
-
         });
 
         // 7. แตะหน้าจอเพื่อวางโมเดลสินค้า
         xr.baseExperience.sessionManager.onXRSessionInit.add(
             (session) => {
+
+                isPlaced = false;
+
+                modelRoot.setEnabled(false);
 
                 const controls =
                     document.querySelector("#rotate-controls");
@@ -374,6 +487,10 @@ export async function renderAR(id) {
                 // ซ่อนปุ่มเมื่อออกจาก AR
                 session.addEventListener("end", () => {
                     controls.style.display = "none";
+
+                    modelRoot.position.copyFrom(previewPosition);
+                    modelRoot.rotationQuaternion = Quaternion.Identity();
+                    modelRoot.setEnabled(true);
                 });
 
                 session.addEventListener("select", () => {
@@ -384,16 +501,29 @@ export async function renderAR(id) {
                         return;
                     }
 
-                    modelRoot.position.copyFrom(
-                        reticle.position
+                    // คำนวณระยะชดเชยตามทิศทางพื้นผิว
+                    const rotationMatrix = Matrix.Identity();
+
+                    reticle.rotationQuaternion.toRotationMatrix(
+                        rotationMatrix
                     );
 
-                    modelRoot.position.y += modelGroundOffset;
+                    const rotatedOffset = Vector3.TransformNormal(
+                        modelAnchorOffset,
+                        rotationMatrix
+                    );
+
+                    // วางฐานโมเดลตรงจุดที่ตรวจพบ
+                    modelRoot.position.copyFrom(
+                        reticle.position.add(rotatedOffset)
+                    );
 
                     modelRoot.rotationQuaternion =
                         reticle.rotationQuaternion.clone();
 
                     modelRoot.setEnabled(true);
+
+                    isPlaced = true;
 
                     status.textContent =
                         `วาง ${product.name} สำเร็จ!`;

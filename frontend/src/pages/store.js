@@ -4,24 +4,18 @@ export async function renderStore() {
 
     app.innerHTML = `
         <header class="navbar">
-            <h2>MR STORE</h2>
-            <span>3D Shopping Experience</span>
+            <h2>BENNY STORE</h2>
+            <span>Furniture Shopping Store</span>
         </header>
 
         <section class="container">
 
             <div class="hero">
                 <h1>Explore Products</h1>
-                <p>Discover products in Augmented Reality</p>
+                <p>Discover products in our store</p>
             </div>
 
-            <div class="products-header">
-                <h2>Our Products</h2>
-                <div class="carousel-controls">
-                    <button id="prevProducts" aria-label="Previous products">‹</button>
-                    <button id="nextProducts" aria-label="Next products">›</button>
-                </div>
-            </div>
+            <h2>Our Products</h2>
 
             <div id="products" class="product-carousel">
                 Loading...
@@ -39,48 +33,31 @@ export async function renderStore() {
 
         const products = await response.json();
 
-        const productContainer = document.querySelector("#products");
+        document.querySelector("#products").innerHTML =
+            products.map(product => `
+                <div class="product-card">
 
-        productContainer.innerHTML = products.map(product => `
-            <div class="product-card">
+                    <img
+                        src="${product.image}"
+                        alt="${product.name}"
+                        onerror="this.src='https://placehold.co/400x300?text=Product'"
+                    >
 
-                <img
-                    src="${product.image}"
-                    alt="${product.name}"
-                    onerror="this.src='https://placehold.co/400x300?text=Product'"
-                >
+                    <div class="product-info">
 
-                <div class="product-info">
-                    <h3>${product.name}</h3>
+                        <h3>${product.name}</h3>
 
-                    <p>฿${Number(product.price).toLocaleString()}</p>
+                        <p>฿${Number(product.price).toLocaleString()}</p>
 
-                    <button
-                        onclick="navigate('/product/${product.id}')">
-                        View Product
-                    </button>
+                        <button
+                            onclick="navigate('/product/${product.id}')">
+                            View Product
+                        </button>
+
+                    </div>
+
                 </div>
-
-            </div>
-        `).join("");
-
-        // ปุ่มเลื่อนสินค้า
-        const prevButton = document.querySelector("#prevProducts");
-        const nextButton = document.querySelector("#nextProducts");
-
-        prevButton.addEventListener("click", () => {
-            productContainer.scrollBy({
-                left: -productContainer.clientWidth * 0.8,
-                behavior: "smooth"
-            });
-        });
-
-        nextButton.addEventListener("click", () => {
-            productContainer.scrollBy({
-                left: productContainer.clientWidth * 0.8,
-                behavior: "smooth"
-            });
-        });
+            `).join("");
 
     } catch (error) {
         document.querySelector("#products").innerHTML =

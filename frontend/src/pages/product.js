@@ -5,7 +5,7 @@ export async function renderProduct(id) {
 
     app.innerHTML = `
         <header class="navbar">
-            <h2 onclick="navigate('/')">MR STORE</h2>
+            <h2 onclick="navigate('/')">BENNY STORE</h2>
             <span>Product Detail</span>
         </header>
 
